@@ -152,7 +152,15 @@ The executable will be located at: `build/SimpleChat_P2P`
 ./scripts/stop_all.sh
 ```
 
-### Option 2: Manual Launch
+**Note:** The launch scripts run nodes in the background, so **Ctrl+C won't stop them**. You must use `stop_all.sh` or manually kill processes:
+```bash
+# Kill all SimpleChat processes
+pkill SimpleChat_P2P
+# or force kill
+pkill -9 SimpleChat_P2P
+```
+
+### Option 2: Manual Launch (Foreground)
 
 **Launch individual nodes:**
 ```bash

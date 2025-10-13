@@ -184,10 +184,12 @@ void NetworkManager::onDataReceived() {
 }
 
 void NetworkManager::processReceivedMessage(const Message& message, const QHostAddress& senderHost, quint16 senderPort) {
-    qDebug() << "Received message from" << message.getOrigin()
-             << "to" << message.getDestination()
-             << "seq:" << message.getSequenceNumber()
-             << "type:" << message.getType();
+    // Only log chat messages, not anti-entropy/ACK spam
+    if (message.getType() == Message::CHAT_MESSAGE) {
+        qDebug() << "Received message from" << message.getOrigin()
+                 << "to" << message.getDestination()
+                 << "seq:" << message.getSequenceNumber();
+    }
 
     // Update peer info
     QString senderId = message.getOrigin();
@@ -247,7 +249,10 @@ void NetworkManager::handleAntiEntropyRequest(const Message& message, const QHos
     QVariantMap remoteVectorClock = message.getVectorClock();
     QList<Message> missingMessages = getMissingMessages(remoteVectorClock);
 
-    qDebug() << "Anti-entropy request from" << senderId << "- sending" << missingMessages.size() << "missing messages";
+    // Only log if there are missing messages
+    if (!missingMessages.isEmpty()) {
+        qDebug() << "Anti-entropy: Sending" << missingMessages.size() << "missing messages to" << senderId;
+    }
 
     // Send response with our vector clock
     Message response("", nodeId, senderId, 0, Message::ANTI_ENTROPY_RESPONSE);
@@ -269,7 +274,10 @@ void NetworkManager::handleAntiEntropyResponse(const Message& message) {
     // Send missing messages to the peer
     QList<Message> missingMessages = getMissingMessages(remoteVectorClock);
 
-    qDebug() << "Anti-entropy response from" << message.getOrigin() << "- sending" << missingMessages.size() << "missing messages";
+    // Only log if there are missing messages
+    if (!missingMessages.isEmpty()) {
+        qDebug() << "Anti-entropy: Sending" << missingMessages.size() << "missing messages to" << message.getOrigin();
+    }
 
     for (const Message& msg : missingMessages) {
         sendDirectMessage(msg, message.getOrigin());
@@ -312,7 +320,7 @@ void NetworkManager::performAntiEntropy() {
     Message request("", nodeId, randomPeerId, 0, Message::ANTI_ENTROPY_REQUEST);
     request.setVectorClock(vectorClock);
 
-    qDebug() << "Performing anti-entropy with peer" << randomPeerId;
+    // Silent - don't log routine anti-entropy
     sendDirectMessage(request, randomPeerId);
 }
 

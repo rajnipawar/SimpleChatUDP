@@ -8,6 +8,8 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QComboBox>
+#include <QTabWidget>
+#include <QMap>
 
 class ChatWindow : public QWidget {
     Q_OBJECT
@@ -16,9 +18,9 @@ public:
     explicit ChatWindow(QWidget* parent = nullptr);
 
     void appendMessage(const QString& message);
+    void appendMessageToConversation(const QString& nodeId, const QString& message);
     void appendSentMessage(const QString& nodeId, const QString& message);
     void appendReceivedMessage(const QString& nodeId, const QString& message);
-    void appendMessageToConversation(const QString& nodeId, const QString& message) { appendMessage("From " + nodeId + ": " + message); }
     void setNodeId(const QString& nodeId);
     QString getSelectedDestination() const;
     void updatePeerList(const QList<QString>& peers);
@@ -29,17 +31,31 @@ signals:
 
 private slots:
     void onSendClicked();
+    void onReturnPressed();
+    void onTabChanged(int index);
     void onBroadcastClicked();
+
+protected:
+    void keyPressEvent(QKeyEvent* event) override;
+    bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
     void setupUI();
+    QTextEdit* getOrCreateConversation(const QString& nodeId);
+    void updateInputVisibility();
+    QString getCurrentTabDestination() const;
 
-    QTextEdit* chatDisplay;
-    QLineEdit* messageInput;
+    QTextEdit* systemLog;
+    QTabWidget* conversationTabs;
+    QTextEdit* messageInput;
     QPushButton* sendButton;
     QPushButton* broadcastButton;
     QLabel* nodeLabel;
-    QLabel* peerListLabel;
     QComboBox* destinationCombo;
+    QWidget* inputContainer;
+    QLabel* destLabel;
     QString currentNodeId;
+    QMap<QString, QTextEdit*> conversations;
+    QMap<QString, QString> tabToNodeMap;
+    QMap<QString, bool> peerStatus;  // peerId -> isActive
 };

@@ -7,6 +7,7 @@
 #include <QSet>
 #include <QQueue>
 #include <QPair>
+#include <QDateTime>
 #include "message.h"
 
 struct PeerInfo {

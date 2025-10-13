@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRandomGenerator>
 
 NetworkManager::NetworkManager(QObject* parent)
     : QObject(parent), socket(nullptr), serverPort(0) {
@@ -305,7 +306,7 @@ void NetworkManager::performAntiEntropy() {
         return;
     }
 
-    int randomIndex = qrand() % activePeerIds.size();
+    int randomIndex = QRandomGenerator::global()->bounded(activePeerIds.size());
     QString randomPeerId = activePeerIds[randomIndex];
 
     Message request("", nodeId, randomPeerId, 0, Message::ANTI_ENTROPY_REQUEST);

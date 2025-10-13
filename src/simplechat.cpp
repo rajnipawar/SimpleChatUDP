@@ -89,8 +89,8 @@ void SimpleChat::onMessageEntered(const QString& text, const QString& destinatio
 
     // Add to conversation
     if (destination == "broadcast" || destination == "-1") {
-        // Broadcast messages are shown in broadcast tab
-        // Already handled in ChatWindow::onBroadcastClicked
+        // Show broadcast in UI
+        window->appendSentMessage("broadcast", trimmedText);
     } else {
         window->appendSentMessage(destination, trimmedText);
     }

@@ -417,7 +417,7 @@ void ChatWindow::onBroadcastClicked() {
     QString text = messageInput->toPlainText().trimmed();
     if (!text.isEmpty()) {
         emit messageEntered(text, "broadcast");
-        appendSentMessage("broadcast", text);
+        // Message display is handled in simplechat.cpp to avoid duplication
         messageInput->clear();
     }
 }

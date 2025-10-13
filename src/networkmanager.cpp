@@ -128,8 +128,8 @@ void NetworkManager::sendDirectMessage(const Message& message, const QString& pe
     QByteArray datagram = message.toDatagram();
     sendDatagram(datagram, QHostAddress(peer.host), peer.port);
 
-    // For chat messages, track for ACK
-    if (message.getType() == Message::CHAT_MESSAGE) {
+    // For chat messages, track for ACK (only if not already tracking - avoid overwriting during retries)
+    if (message.getType() == Message::CHAT_MESSAGE && !pendingAcks.contains(message.getMessageId())) {
         PendingMessage pending;
         pending.message = message;
         pending.targetPeerId = peerId;
@@ -141,15 +141,21 @@ void NetworkManager::sendDirectMessage(const Message& message, const QString& pe
 }
 
 void NetworkManager::sendBroadcastMessage(const Message& message) {
-    qDebug() << "Broadcasting message to all peers";
+    int totalPeers = peers.size();
+    int activePeers = 0;
+
+    qDebug() << "Broadcasting message to all peers. Total peers:" << totalPeers;
 
     for (auto it = peers.begin(); it != peers.end(); ++it) {
         const PeerInfo& peer = it.value();
         if (peer.isActive) {
+            activePeers++;
             QByteArray datagram = message.toDatagram();
             sendDatagram(datagram, QHostAddress(peer.host), peer.port);
         }
     }
+
+    qDebug() << "Broadcast sent to" << activePeers << "active peers out of" << totalPeers << "total";
 
     // For broadcast chat messages, we don't track ACKs (gossip-style)
 }
@@ -184,13 +190,6 @@ void NetworkManager::onDataReceived() {
 }
 
 void NetworkManager::processReceivedMessage(const Message& message, const QHostAddress& senderHost, quint16 senderPort) {
-    // Only log chat messages, not anti-entropy/ACK spam
-    if (message.getType() == Message::CHAT_MESSAGE) {
-        qDebug() << "Received message from" << message.getOrigin()
-                 << "to" << message.getDestination()
-                 << "seq:" << message.getSequenceNumber();
-    }
-
     // Update peer info
     QString senderId = message.getOrigin();
     if (!peers.contains(senderId)) {
@@ -225,6 +224,10 @@ void NetworkManager::handleChatMessage(const Message& message) {
 
     // Store message if we haven't seen it
     if (!hasMessage(message.getMessageId())) {
+        qDebug() << "New message from" << message.getOrigin()
+                 << "to" << message.getDestination()
+                 << "seq:" << message.getSequenceNumber();
+
         storeMessage(message);
         updateVectorClock(message.getOrigin(), message.getSequenceNumber());
 

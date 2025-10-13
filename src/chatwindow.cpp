@@ -6,6 +6,7 @@ ChatWindow::ChatWindow(QWidget* parent) : QWidget(parent) {
     setupUI();
     setWindowTitle("SimpleChat P2P");
     resize(700, 500);
+    setAttribute(Qt::WA_QuitOnClose, true);
 }
 
 void ChatWindow::setupUI() {

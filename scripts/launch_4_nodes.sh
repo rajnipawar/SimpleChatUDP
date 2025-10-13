@@ -23,20 +23,34 @@ fi
 
 echo "Launching 4 SimpleChat P2P nodes..."
 echo "Ports: 9001, 9002, 9003, 9004"
+echo "Press Ctrl+C to stop all nodes"
 echo ""
+
+# Array to track process IDs
+PIDS=()
+
+# Trap Ctrl+C to kill all child processes
+trap 'echo ""; echo "Stopping all nodes..."; kill ${PIDS[@]} 2>/dev/null; exit 0' INT TERM
 
 # Launch nodes with peer discovery
 "$BUILD_DIR/SimpleChat_P2P" -p 9001 --peers 9001,9002,9003,9004 &
+PIDS+=($!)
 sleep 1
 
 "$BUILD_DIR/SimpleChat_P2P" -p 9002 --peers 9001,9002,9003,9004 &
+PIDS+=($!)
 sleep 1
 
 "$BUILD_DIR/SimpleChat_P2P" -p 9003 --peers 9001,9002,9003,9004 &
+PIDS+=($!)
 sleep 1
 
 "$BUILD_DIR/SimpleChat_P2P" -p 9004 --peers 9001,9002,9003,9004 &
+PIDS+=($!)
 
 echo ""
 echo "All nodes launched!"
-echo "To stop all nodes, run: ./scripts/stop_all.sh"
+echo "Press Ctrl+C to stop all nodes"
+
+# Wait for all background processes
+wait

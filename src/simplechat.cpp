@@ -109,8 +109,6 @@ void SimpleChat::onMessageReceived(const Message& message) {
         window->appendReceivedMessage(origin, text);
         window->appendMessage(QString("Message from %1: %2").arg(origin).arg(text));
     }
-
-    qDebug() << "Message delivered from" << origin << ":" << text;
 }
 
 void SimpleChat::onPeerDiscovered(const QString& peerId, const QString& host, int port) {

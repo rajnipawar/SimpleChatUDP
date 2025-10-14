@@ -118,7 +118,7 @@ void NetworkManager::sendMessage(const Message& message) {
     }
 }
 
-void NetworkManager::sendDirectMessage(const Message& message, const QString& peerId) {
+void NetworkManager::sendDirectMessage(const Message& message, const QString& peerId, bool requireAck) {
     if (!peers.contains(peerId)) {
         qDebug() << "Unknown peer:" << peerId;
         return;
@@ -128,8 +128,13 @@ void NetworkManager::sendDirectMessage(const Message& message, const QString& pe
     QByteArray datagram = message.toDatagram();
     sendDatagram(datagram, QHostAddress(peer.host), peer.port);
 
-    // For chat messages, track for ACK (only if not already tracking - avoid overwriting during retries)
-    if (message.getType() == Message::CHAT_MESSAGE && !pendingAcks.contains(message.getMessageId())) {
+    // For chat messages, track for ACK (only for direct messages, not broadcasts)
+    // Only add if not already tracking to avoid overwriting during retries
+    // Skip ACK tracking for anti-entropy synced messages (requireAck = false)
+    if (requireAck &&
+        message.getType() == Message::CHAT_MESSAGE &&
+        !message.isBroadcast() &&
+        !pendingAcks.contains(message.getMessageId())) {
         PendingMessage pending;
         pending.message = message;
         pending.targetPeerId = peerId;
@@ -141,21 +146,15 @@ void NetworkManager::sendDirectMessage(const Message& message, const QString& pe
 }
 
 void NetworkManager::sendBroadcastMessage(const Message& message) {
-    int totalPeers = peers.size();
-    int activePeers = 0;
-
-    qDebug() << "Broadcasting message to all peers. Total peers:" << totalPeers;
+    qDebug() << "Broadcasting message to all peers";
 
     for (auto it = peers.begin(); it != peers.end(); ++it) {
         const PeerInfo& peer = it.value();
         if (peer.isActive) {
-            activePeers++;
             QByteArray datagram = message.toDatagram();
             sendDatagram(datagram, QHostAddress(peer.host), peer.port);
         }
     }
-
-    qDebug() << "Broadcast sent to" << activePeers << "active peers out of" << totalPeers << "total";
 
     // For broadcast chat messages, we don't track ACKs (gossip-style)
 }
@@ -221,27 +220,29 @@ void NetworkManager::processReceivedMessage(const Message& message, const QHostA
 void NetworkManager::handleChatMessage(const Message& message) {
     // Check if this is for us or broadcast
     bool isForUs = message.getDestination() == nodeId || message.isBroadcast();
+    bool alreadyHave = hasMessage(message.getMessageId());
 
     // Store message if we haven't seen it
-    if (!hasMessage(message.getMessageId())) {
-        qDebug() << "New message from" << message.getOrigin()
-                 << "to" << message.getDestination()
-                 << "seq:" << message.getSequenceNumber();
-
+    if (!alreadyHave) {
         storeMessage(message);
         updateVectorClock(message.getOrigin(), message.getSequenceNumber());
+    }
 
-        // Deliver if it's for us
-        if (isForUs) {
+    // Deliver if it's for us (even if we've seen it before via anti-entropy)
+    // But NOT if we're the sender (origin == our nodeId)
+    if (isForUs && message.getOrigin() != nodeId) {
+        // For broadcasts: always deliver even if seen before (might come via anti-entropy first)
+        // For direct messages: only deliver if new
+        if (message.isBroadcast() || !alreadyHave) {
             emit messageReceived(message);
         }
+    }
 
-        // Send ACK if it's directly to us (not broadcast)
-        if (message.getDestination() == nodeId) {
-            Message ack("", nodeId, message.getOrigin(), 0, Message::ACK);
-            ack.setMessageId(message.getMessageId());
-            sendDirectMessage(ack, message.getOrigin());
-        }
+    // Send ACK if it's directly to us (not broadcast) and is new
+    if (!alreadyHave && message.getDestination() == nodeId) {
+        Message ack("", nodeId, message.getOrigin(), 0, Message::ACK);
+        ack.setMessageId(message.getMessageId());
+        sendDirectMessage(ack, message.getOrigin());
     }
 }
 
@@ -283,7 +284,7 @@ void NetworkManager::handleAntiEntropyResponse(const Message& message) {
     }
 
     for (const Message& msg : missingMessages) {
-        sendDirectMessage(msg, message.getOrigin());
+        sendDirectMessage(msg, message.getOrigin(), false);  // Don't require ACK for anti-entropy sync
     }
 }
 
@@ -349,12 +350,14 @@ void NetworkManager::checkPendingAcks() {
         }
     }
 
-    // Retry messages
+    // Retry messages (check if still pending - ACK may have arrived)
     for (const QString& messageId : toRetry) {
-        PendingMessage& pending = pendingAcks[messageId];
-        pending.retryCount++;
-        pending.sentTime = now;
-        sendDirectMessage(pending.message, pending.targetPeerId);
+        if (pendingAcks.contains(messageId)) {
+            PendingMessage& pending = pendingAcks[messageId];
+            pending.retryCount++;
+            pending.sentTime = now;
+            sendDirectMessage(pending.message, pending.targetPeerId);
+        }
     }
 }
 

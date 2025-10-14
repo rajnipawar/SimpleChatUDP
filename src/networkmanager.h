@@ -58,7 +58,7 @@ private:
     void handleAntiEntropyResponse(const Message& message);
     void handleAck(const Message& message);
 
-    void sendDirectMessage(const Message& message, const QString& peerId);
+    void sendDirectMessage(const Message& message, const QString& peerId, bool requireAck = true);
     void sendBroadcastMessage(const Message& message);
     void sendWithRetry(const Message& message, const QString& peerId);
     void sendDatagram(const QByteArray& datagram, const QHostAddress& host, quint16 port);

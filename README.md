@@ -178,6 +178,35 @@ The executable will be located at: `build/SimpleChat_P2P`
 
 ## Testing Instructions
 
+### Automated Unit Tests
+
+Run the automated test suite:
+```bash
+./scripts/run_tests.sh
+```
+
+Or manually:
+```bash
+cd build
+cmake .. -DBUILD_TESTS=ON
+make test_basic
+ctest --verbose
+```
+
+**Test Coverage:**
+- Message creation and validation
+- Message serialization/deserialization (JSON)
+- Broadcast message detection
+- Message ID generation
+- Vector clock operations
+
+**All tests should pass with output:**
+```
+100% tests passed, 0 tests failed out of 1
+```
+
+### Manual Integration Tests
+
 ### Test 1: Basic P2P Messaging
 1. Launch 2 nodes using `./scripts/launch_2_nodes.sh`
 2. Wait for peer discovery (check System tab)

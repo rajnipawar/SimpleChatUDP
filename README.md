@@ -118,13 +118,11 @@ qmake --version
 
 ### Using the Build Script (Recommended)
 ```bash
-cd 02_Pawar_Rajni_PA2
 ./scripts/build.sh
 ```
 
 ### Manual Build
 ```bash
-cd 02_Pawar_Rajni_PA2
 mkdir build
 cd build
 cmake ..

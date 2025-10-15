@@ -377,7 +377,8 @@ QT_LOGGING_RULES="*.debug=true" ./build/SimpleChat_P2P -p 9001
 - [x] Message retry mechanism
 - [x] Vector clock implementation
 - [x] Proper sequence numbering
-- [ ] Git repository with commit history
+- [x] Git repository with commit history (17 commits)
+- [x] Automated unit tests
 
 ## References
 

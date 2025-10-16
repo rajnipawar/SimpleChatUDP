@@ -411,9 +411,9 @@ QList<Message> NetworkManager::getMissingMessages(const QVariantMap& remoteVecto
 QList<QString> NetworkManager::getActivePeers() const {
     QList<QString> activePeers;
     for (auto it = peers.begin(); it != peers.end(); ++it) {
-        if (it.value().isActive) {
-            activePeers.append(it.key());
-        }
+        // Return all peers, not just active ones
+        // This prevents manually added peers from disappearing
+        activePeers.append(it.key());
     }
     return activePeers;
 }

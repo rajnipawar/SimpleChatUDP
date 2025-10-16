@@ -20,6 +20,7 @@ private slots:
     void onMessageReceived(const Message& message);
     void onPeerDiscovered(const QString& peerId, const QString& host, int port);
     void onPeerStatusChanged(const QString& peerId, bool active);
+    void onAddPeerRequested(const QString& host, int port);
 
 private:
     QString generateNodeId(int port);

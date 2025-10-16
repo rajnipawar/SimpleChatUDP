@@ -49,10 +49,11 @@ The anti-entropy mechanism ensures reliable message propagation:
 
 ### User Interface
 - **Modern dark-themed Qt GUI** with improved styling
-- **System tab** - General system messages and status updates
+- **System tab** - General system messages, status updates, and manual peer addition
 - **Broadcast tab** - View and send broadcast messages
 - **Per-peer tabs** - Individual conversation tabs for each peer
-- **Active peers list** - Shows online/offline status of discovered peers
+- **Peer dropdown** - Select destination from all known peers (auto-discovered and manually added)
+- **Manual peer addition** - Compact input field and "+" button on System tab
 - **WhatsApp-inspired message bubbles** - Sent (blue) and received (gray) messages
 
 ## Technical Stack
@@ -174,6 +175,29 @@ The executable will be located at: `build/SimpleChat_P2P`
 - `-h, --help` : Display help information
 - `-v, --version` : Display version information
 
+### Manual Peer Addition
+
+In addition to automatic peer discovery via the `--peers` option, you can manually add peers through the GUI:
+
+1. **Go to the System tab** (default view)
+2. **Enter peer address** in the "Add Peer (IP:Port)" field on the right side of the input area
+   - Example: `127.0.0.1:9005` for local peer on port 9005
+   - Example: `192.168.1.100:9001` for remote peer on different machine
+3. **Click the "+" button** next to the input field
+4. The peer will be added to your dropdown list permanently and message synchronization will begin automatically
+5. You can now select the peer from the dropdown and send messages
+
+**Important Notes:**
+- Manually added peers remain in your contact list permanently (won't disappear even if offline)
+- Peers are treated as contacts - once added, they stay in the dropdown
+- Anti-entropy will automatically sync messages when the peer comes online
+
+**Use Cases:**
+- Adding peers on non-standard ports (e.g., 9005, 9010, etc.)
+- Connecting to peers on different machines/networks
+- Adding peers that weren't specified in initial `--peers` list
+- Dynamically expanding your P2P network without restarting
+
 ## Testing Instructions
 
 ### Automated Unit Tests
@@ -251,6 +275,17 @@ ctest --verbose
 3. Launch Node3 and Node4
 4. Verify all nodes discover each other
 5. Stop a node and verify others detect it as offline after timeout
+
+### Test 6.1: Manual Peer Addition
+1. Launch Node1 on port 9001: `./build/SimpleChat_P2P -p 9001 --peers 9001`
+2. Launch Node2 on a different port without auto-discovery: `./build/SimpleChat_P2P -p 9005 --peers 9005`
+3. On Node1's GUI, go to System tab (default)
+4. In the "Add Peer (IP:Port)" field on the right, enter: `127.0.0.1:9005`
+5. Click the "+" button
+6. Verify "Node9005" appears in the dropdown
+7. Select "Node9005" and send a message
+8. Verify message is received on Node2
+9. Test with remote IP addresses (e.g., `192.168.1.100:9001`) if on different machines
 
 ### Test 7: Multi-hop Message Propagation
 1. Launch 3 nodes

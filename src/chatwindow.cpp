@@ -5,12 +5,14 @@
 ChatWindow::ChatWindow(QWidget* parent) : QWidget(parent) {
     setupUI();
     setWindowTitle("SimpleChat P2P");
-    resize(700, 500);
+    resize(900, 550);
     setAttribute(Qt::WA_QuitOnClose, true);
 }
 
 void ChatWindow::setupUI() {
     auto* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(8, 8, 8, 8);
+    mainLayout->setSpacing(8);
 
     // Apply dark theme styling to main window
     setStyleSheet("QWidget { background-color: #0B141A; color: #E9EDEF; }");
@@ -20,20 +22,24 @@ void ChatWindow::setupUI() {
         "font-weight: bold; "
         "color: #00D4AA; "
         "background-color: #202C33; "
-        "padding: 12px 16px; "
-        "border-radius: 16px;"
+        "padding: 8px 12px; "
+        "border-radius: 8px; "
+        "font-size: 13px;"
     );
     mainLayout->addWidget(nodeLabel);
 
     // Chat area (no splitter, no peer list sidebar)
     QWidget* chatContainer = new QWidget(this);
     auto* chatLayout = new QVBoxLayout(chatContainer);
+    chatLayout->setContentsMargins(0, 0, 0, 0);
+    chatLayout->setSpacing(4);
 
     conversationTabs = new QTabWidget(this);
     conversationTabs->setStyleSheet(
         "QTabWidget::pane { background-color: #0B141A; border: none; } "
-        "QTabBar::tab { background-color: #202C33; color: #8696A0; padding: 10px 18px; margin: 3px; border-radius: 12px; } "
-        "QTabBar::tab:selected { background-color: #00D4AA; color: #0B141A; font-weight: bold; border-radius: 12px; }"
+        "QTabBar::tab { background-color: #202C33; color: #E9EDEF; padding: 8px 16px; margin: 2px; border-radius: 8px; font-size: 13px; font-weight: 500; } "
+        "QTabBar::tab:selected { background-color: #00D4AA; color: #000000; font-weight: bold; border-radius: 8px; } "
+        "QTabBar::tab:hover { background-color: #374151; color: #FFFFFF; }"
     );
 
     // System tab for general messages
@@ -72,36 +78,35 @@ void ChatWindow::setupUI() {
         "QWidget { "
         "    background-color: #1E293B; "
         "    border-top: 1px solid #374151; "
-        "    padding: 8px; "
-        "    border-radius: 0px 0px 12px 12px; "
         "}"
     );
     auto* inputLayout = new QHBoxLayout(inputContainer);
-    inputLayout->setContentsMargins(12, 8, 12, 8);
-    inputLayout->setSpacing(12);
+    inputLayout->setContentsMargins(8, 6, 8, 6);
+    inputLayout->setSpacing(6);
 
     // Destination selection
     destLabel = new QLabel("To:", this);
     destLabel->setStyleSheet(
         "color: #8696A0; "
         "font-weight: bold; "
-        "padding: 8px;"
+        "padding: 4px; "
+        "font-size: 12px;"
     );
     inputLayout->addWidget(destLabel);
 
     destinationCombo = new QComboBox(this);
-    destinationCombo->setMinimumWidth(120);
-    destinationCombo->setMinimumHeight(40);
+    destinationCombo->setMinimumWidth(100);
+    destinationCombo->setMinimumHeight(32);
     destinationCombo->setStyleSheet(
         "QComboBox { "
         "    background-color: #202C33; "
         "    color: #E9EDEF; "
-        "    padding: 12px 18px; "
+        "    padding: 6px 10px; "
         "    border: 1px solid #4B5563; "
-        "    border-radius: 12px; "
+        "    border-radius: 8px; "
         "    font-weight: 500; "
-        "    font-size: 14px; "
-        "    min-height: 20px; "
+        "    font-size: 12px; "
+        "    min-height: 16px; "
         "    outline: none; "
         "}"
         "QComboBox:hover { "
@@ -157,8 +162,8 @@ void ChatWindow::setupUI() {
 
     messageInput = new QTextEdit(this);
     messageInput->setPlaceholderText("Type your message here...");
-    messageInput->setMaximumHeight(80);
-    messageInput->setMinimumHeight(50);
+    messageInput->setMaximumHeight(60);
+    messageInput->setMinimumHeight(32);
     messageInput->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     messageInput->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     messageInput->setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
@@ -166,11 +171,11 @@ void ChatWindow::setupUI() {
         "QTextEdit { "
         "    background-color: #374151; "
         "    color: #FFFFFF; "
-        "    padding: 8px 14px; "
-        "    border: 2px solid #6B7280; "
-        "    border-radius: 16px; "
+        "    padding: 6px 10px; "
+        "    border: 1px solid #6B7280; "
+        "    border-radius: 8px; "
         "    font-family: Arial, sans-serif; "
-        "    font-size: 14px; "
+        "    font-size: 13px; "
         "    line-height: 1.2; "
         "    selection-background-color: #00D4AA; "
         "    selection-color: #0B141A; "
@@ -261,6 +266,57 @@ void ChatWindow::setupUI() {
     );
     connect(broadcastButton, &QPushButton::clicked, this, &ChatWindow::onBroadcastClicked);
     inputLayout->addWidget(broadcastButton);
+
+    // Add separator
+    inputLayout->addSpacing(16);
+
+    // Add Peer input (compact, only visible on System tab)
+    peerAddressInput = new QLineEdit(this);
+    peerAddressInput->setPlaceholderText("Add Peer (IP:Port)");
+    peerAddressInput->setMinimumWidth(150);
+    peerAddressInput->setMaximumWidth(200);
+    peerAddressInput->setStyleSheet(
+        "QLineEdit { "
+        "    background-color: #374151; "
+        "    color: #FFFFFF; "
+        "    padding: 10px 14px; "
+        "    border: 2px solid #6B7280; "
+        "    border-radius: 12px; "
+        "    font-size: 13px; "
+        "    font-family: monospace; "
+        "}"
+        "QLineEdit:focus { "
+        "    border-color: #8B5CF6; "
+        "    background-color: #475569; "
+        "}"
+        "QLineEdit:hover { "
+        "    border-color: #9CA3AF; "
+        "}"
+    );
+    inputLayout->addWidget(peerAddressInput);
+
+    addPeerButton = new QPushButton("+", this);
+    addPeerButton->setToolTip("Add peer to network");
+    addPeerButton->setStyleSheet(
+        "QPushButton { "
+        "    background-color: #8B5CF6; "
+        "    color: #FFFFFF; "
+        "    padding: 12px 18px; "
+        "    border: none; "
+        "    border-radius: 12px; "
+        "    font-weight: bold; "
+        "    font-size: 16px; "
+        "    min-width: 40px; "
+        "}"
+        "QPushButton:hover { "
+        "    background-color: #7C3AED; "
+        "}"
+        "QPushButton:pressed { "
+        "    background-color: #6D28D9; "
+        "}"
+    );
+    connect(addPeerButton, &QPushButton::clicked, this, &ChatWindow::onAddPeerClicked);
+    inputLayout->addWidget(addPeerButton);
 
     chatLayout->addWidget(inputContainer);
 
@@ -460,6 +516,10 @@ void ChatWindow::updateInputVisibility() {
     destinationCombo->setVisible(isSystemTab);
     sendButton->setVisible(!isBroadcastTab);
     broadcastButton->setVisible(isBroadcastTab || isSystemTab);
+
+    // Add Peer controls only visible on System tab
+    peerAddressInput->setVisible(isSystemTab);
+    addPeerButton->setVisible(isSystemTab);
 }
 
 QString ChatWindow::getCurrentTabDestination() const {
@@ -475,4 +535,35 @@ QString ChatWindow::getCurrentTabDestination() const {
         QString tabText = conversationTabs->tabText(currentIndex);
         return tabText;
     }
+}
+
+void ChatWindow::onAddPeerClicked() {
+    QString input = peerAddressInput->text().trimmed();
+    if (input.isEmpty()) {
+        return;
+    }
+
+    // Parse IP:Port format
+    QStringList parts = input.split(":");
+    if (parts.size() != 2) {
+        appendMessage("<span style='color: #FF6B6B; font-weight: bold;'>[Error]</span> Invalid format. Use IP:Port (e.g., 127.0.0.1:9005)");
+        return;
+    }
+
+    QString host = parts[0].trimmed();
+    bool ok;
+    int port = parts[1].trimmed().toInt(&ok);
+
+    if (!ok || port < 1024 || port > 65535) {
+        appendMessage("<span style='color: #FF6B6B; font-weight: bold;'>[Error]</span> Invalid port number. Must be between 1024-65535");
+        return;
+    }
+
+    // Emit signal to SimpleChat to handle peer addition
+    emit addPeerRequested(host, port);
+
+    // Clear input field
+    peerAddressInput->clear();
+
+    appendMessage(QString("<span style='color: #00D4AA; font-weight: bold;'>[Info]</span> Adding peer: %1:%2").arg(host).arg(port));
 }

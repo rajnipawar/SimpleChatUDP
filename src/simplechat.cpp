@@ -17,6 +17,7 @@ SimpleChat::SimpleChat(int port, const QList<int>& peerPorts, QObject* parent)
     networkManager->setNodeId(nodeId);
 
     connect(window, &ChatWindow::messageEntered, this, &SimpleChat::onMessageEntered);
+    connect(window, &ChatWindow::addPeerRequested, this, &SimpleChat::onAddPeerRequested);
     connect(networkManager, &NetworkManager::messageReceived, this, &SimpleChat::onMessageReceived);
     connect(networkManager, &NetworkManager::peerDiscovered, this, &SimpleChat::onPeerDiscovered);
     connect(networkManager, &NetworkManager::peerStatusChanged, this, &SimpleChat::onPeerStatusChanged);
@@ -127,6 +128,20 @@ void SimpleChat::onPeerStatusChanged(const QString& peerId, bool active) {
     window->updatePeerStatus(peerId, active);
 
     // Update peer list
+    QList<QString> activePeers = networkManager->getActivePeers();
+    window->updatePeerList(activePeers);
+}
+
+void SimpleChat::onAddPeerRequested(const QString& host, int port) {
+    // Generate peer ID from port
+    QString peerId = generateNodeId(port);
+
+    window->appendMessage(QString("Manually adding peer %1 at %2:%3").arg(peerId).arg(host).arg(port));
+
+    // Add peer to network manager
+    networkManager->addPeer(peerId, host, port);
+
+    // Update peer list in UI
     QList<QString> activePeers = networkManager->getActivePeers();
     window->updatePeerList(activePeers);
 }

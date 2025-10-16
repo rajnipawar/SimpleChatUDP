@@ -28,12 +28,14 @@ public:
 
 signals:
     void messageEntered(const QString& message, const QString& destination);
+    void addPeerRequested(const QString& host, int port);
 
 private slots:
     void onSendClicked();
     void onReturnPressed();
     void onTabChanged(int index);
     void onBroadcastClicked();
+    void onAddPeerClicked();
 
 protected:
     void keyPressEvent(QKeyEvent* event) override;
@@ -54,6 +56,8 @@ private:
     QComboBox* destinationCombo;
     QWidget* inputContainer;
     QLabel* destLabel;
+    QLineEdit* peerAddressInput;
+    QPushButton* addPeerButton;
     QString currentNodeId;
     QMap<QString, QTextEdit*> conversations;
     QMap<QString, QString> tabToNodeMap;
